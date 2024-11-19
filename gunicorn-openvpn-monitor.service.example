@@ -1,0 +1,37 @@
+[Unit]
+Description=gunicorn openvpn-monitor daemon
+After=network.target
+
+[Service]
+# gunicorn can let systemd know when it is ready
+Type=notify
+NotifyAccess=main
+# the specific user that our service will run as
+User=gunicorn
+Group=gunicorn
+WorkingDirectory=/srv/openvpn-monitor
+#Environment="PATH=/srv/openvpn-monitor/.venv/bin"
+ExecStart=/srv/openvpn-monitor/.venv/bin/gunicorn openvpn-monitor -b 0.0.0.0:8080 -u gunicorn --access-logfile /var/log/gunicorn/access.log --log-file /var/log/gunicorn/gunicorn.log
+#RuntimeDirectory=gunicorn
+ExecReload=/bin/kill -s HUP $MAINPID
+KillMode=mixed
+TimeoutStopSec=5
+PrivateTmp=true
+# Mount everything read-only except /dev/, /proc/ and /sys
+ProtectSystem=strict
+# Deny process to escalating privileges
+NoNewPrivileges=yes
+# Deny access to other users processes
+ProtectProc=noaccess
+# Protect kernel variables accessible in /proc, /sys or via sysctl(8)/sysctl.conf(5)
+ProtectKernelTunables=yes
+# Prevent service from manipulating clock
+ProtectClock=yes
+# Restrict access to /home/, /root, /run/user for a service
+ProtectHome=yes
+# rw access to log dir
+ReadWritePaths=/var/log/gunicorn
+
+
+[Install]
+WantedBy=multi-user.target
