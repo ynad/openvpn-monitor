@@ -2,3 +2,4 @@ geoip2==4.8.1
 humanize==4.11.0
 bottle==0.13.2
 semantic_version==2.10.0
+gunicorn
