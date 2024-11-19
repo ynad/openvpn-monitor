@@ -1,5 +1,10 @@
 # openvpn-monitor
 
+Fork from the original work by `furlongm`. All credits to the original author:
+https://github.com/furlongm/openvpn-monitor
+
+This repo aims to update dependencies and keep a working `openvpn-monitor` solution in newer systems.
+
 
 ## Summary
 
@@ -13,7 +18,7 @@ server, however it does not necessarily need to.
 
 ## Supported Operating Systems
   - Ubuntu 20.04 LTS (focal)
-  - Debian 10 (buster)
+  - Debian 10, 11, 12
   - CentOS/RHEL 8
 
 
@@ -21,12 +26,12 @@ server, however it does not necessarily need to.
 
 The current source code is available on github:
 
-https://github.com/furlongm/openvpn-monitor
+https://github.com/ynad/openvpn-monitor
 
 
 ## Install Options
 
-  - [virtualenv + pip + gunicorn](#virtualenv--pip--gunicorn)
+  - [venv + pip + gunicorn](#venv--pip--gunicorn)
   - [apache](#apache)
   - [docker](#docker)
   - [nginx + uwsgi](#nginx--uwsgi)
@@ -47,26 +52,56 @@ semanage port -a -t openvpn_port_t -p tcp 5555
 setsebool -P httpd_can_network_connect=1
 ```
 
+---
 
-### virtualenv + pip + gunicorn
+### venv + pip + gunicorn
 
 ```shell
-# apt -y install python3-virtualenv geoip-database geoip-database-extra # (debian/ubuntu)
-# dnf -y install python3-virtualenv geolite2-city                       # (centos/rhel)
-mkdir /srv/openvpn-monitor
-cd /srv/openvpn-monitor
-virtualenv -p python3 .
-. bin/activate
-pip install openvpn-monitor gunicorn
-gunicorn openvpn-monitor -b 0.0.0.0:80
+apt -y install python3-venv geoip-database   # (debian/ubuntu)
+dnf -y install python3-venv geolite2-city    # (centos/rhel)
+```
+
+#### 1) Checkout `openvpn-monitor`
+
+```shell
+cd /srv/
+git clone https://github.com/ynad/openvpn-monitor.git
+cd openvpn-monitor
+```
+
+#### 2) Set-up venv and install pip requirements
+```shell
+python3 -m venv .venv
+source .venv/bin/activate
+python3 -m pip install -r requirements_gunicorn.txt
+```
+
+#### 3) Gunicorn manual run
+```shell
+gunicorn openvpn-monitor -b 0.0.0.0:8080
+```
+
+#### 4) Gunicorn systemd service
+```shell
+sudo cp gunicorn-openvpn-monitor.service.example /etc/systemd/system/gunicorn-openvpn-monitor.service
+sudo systemctl enable gunicorn-openvpn-monitor.service
+sudo systemctl restart gunicorn-openvpn-monitor.service
 ```
 
 See [configuration](#configuration) for details on configuring openvpn-monitor.
 
+---
 
 ### apache
 
-#### Install dependencies and configure apache
+#### 1) Checkout `openvpn-monitor`
+
+```shell
+cd /var/www/html
+git clone https://github.com/ynad/openvpn-monitor.git
+```
+
+#### 2) Install dependencies and configure apache
 
 ##### Debian / Ubuntu
 
@@ -85,18 +120,12 @@ echo "WSGIScriptAlias /openvpn-monitor /var/www/html/openvpn-monitor/openvpn-mon
 systemctl restart httpd
 ```
 
-#### Checkout openvpn-monitor
-
-```shell
-cd /var/www/html
-git clone https://github.com/furlongm/openvpn-monitor.git
-```
-
 See [configuration](#configuration) for details on configuring openvpn-monitor.
 
+---
 
 ### docker
-
+(out-of-date) Work by https://github.com/ruimarinho/docker-openvpn-monitor
 ```shell
 docker run -p 80:80 ruimarinho/openvpn-monitor
 ```
@@ -105,28 +134,33 @@ Read the [docker installation instructions](https://github.com/ruimarinho/docker
 for details on how to generate a dynamic configuration using only environment
 variables.
 
+---
 
 ### nginx + uwsgi
 
-#### Install dependencies
+#### 1) Install dependencies
 
 ```shell
-# apt -y install git gcc nginx uwsgi uwsgi-plugin-python3 virtualenv python3-dev libgeoip-dev geoip-database geoip-database-extra  # (debian/ubuntu)
-# dnf -y install git gcc nginx uwsgi uwsgi-plugin-python3 virtualenv python3-devel geoip-devel geolite2-city                       # (centos/rhel)
+apt -y install git gcc nginx uwsgi uwsgi-plugin-python3 python3-venv python3-dev libgeoip-dev geoip-database   # (debian/ubuntu)
+dnf -y install git gcc nginx uwsgi uwsgi-plugin-python3 python3-venv python3-devel geoip-devel geolite2-city   # (centos/rhel)
 ```
 
-#### Checkout openvpn-monitor
+#### 2) Checkout `openvpn-monitor`
 
 ```shell
-cd /srv
-git clone https://github.com/furlongm/openvpn-monitor.git
+cd /srv/
+git clone https://github.com/ynad/openvpn-monitor.git
 cd openvpn-monitor
-virtualenv -p python3 .
-. bin/activate
-pip install -r requirements.txt
 ```
 
-#### uWSGI app config
+#### 3) Set-up venv and install pip requirements
+```shell
+python3 -m venv .venv
+source .venv/bin/activate
+python3 -m pip install -r requirements.txt
+```
+
+#### 4) uWSGI app config
 
 Create a uWSGI config: `/etc/uwsgi/apps-available/openvpn-monitor.ini`
 
@@ -143,7 +177,7 @@ manage-script-name = true
 mount=/openvpn-monitor=openvpn-monitor.py
 ```
 
-#### Nginx site config
+#### 5) Nginx site config
 
 Create an Nginx config: `/etc/nginx/sites-available/openvpn-monitor`
 
@@ -157,7 +191,7 @@ server {
 }
 ```
 
-#### Enable uWSGI app and Nginx site, and restart services
+#### 6) Enable uWSGI app and Nginx site, and restart services
 
 ```shell
 ln -s /etc/uwsgi/apps-available/openvpn-monitor.ini /etc/uwsgi/apps-enabled/
@@ -169,13 +203,15 @@ systemctl restart nginx
 
 See [configuration](#configuration) for details on configuring openvpn-monitor.
 
-
+---
 
 ### deb / rpm
 
 ```shell
 TBD
 ```
+
+---
 
 ## Configuration
 
@@ -199,6 +235,7 @@ management socket-name unix pw-file
 Refer to the OpenVPN documentation for further information on how to secure
 access to the management interface.
 
+---
 
 ### Configure openvpn-monitor
 
@@ -217,6 +254,7 @@ Once configured, navigate to `http://myipaddress/openvpn-monitor/`
 
 Note the trailing slash, the images may not appear without it.
 
+---
 
 ### Debugging
 
@@ -235,6 +273,7 @@ cd /var/www/html/openvpn-monitor
 python3 openvpn-monitor.py -d
 ```
 
+---
 
 ## License
 
