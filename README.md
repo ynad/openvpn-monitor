@@ -8,7 +8,7 @@ This repo aims to update dependencies and keep a working `openvpn-monitor` solut
 
 ## Summary
 
-openvpn-monitor is a simple python program to generate html that displays the
+`openvpn-monitor` is a simple python program to generate html that displays the
 status of an OpenVPN server, including all current connections. It uses the
 OpenVPN management console. It typically runs on the same host as the OpenVPN
 server, however it does not necessarily need to.
@@ -56,12 +56,14 @@ setsebool -P httpd_can_network_connect=1
 
 ### venv + pip + gunicorn
 
+#### 1) Install dependencies
+
 ```shell
 apt -y install python3-venv geoip-database   # (debian/ubuntu)
 dnf -y install python3-venv geolite2-city    # (centos/rhel)
 ```
 
-#### 1) Checkout `openvpn-monitor`
+#### 2) Checkout `openvpn-monitor`
 
 ```shell
 cd /srv/
@@ -69,23 +71,25 @@ git clone https://github.com/ynad/openvpn-monitor.git
 cd openvpn-monitor
 ```
 
-#### 2) Set-up venv and install pip requirements
+#### 3) Set-up venv and install pip requirements
+
 ```shell
 python3 -m venv .venv
 source .venv/bin/activate
 python3 -m pip install -r requirements_gunicorn.txt
 ```
 
-#### 3) Gunicorn manual run
+#### 4) Gunicorn manual run
 ```shell
 gunicorn openvpn-monitor -b 0.0.0.0:8080
 ```
 
-#### 4) Gunicorn systemd service
+#### 5) Gunicorn systemd service
+Copy and adapt to your system the provided systemd unit service example:
 ```shell
-sudo cp gunicorn-openvpn-monitor.service.example /etc/systemd/system/gunicorn-openvpn-monitor.service
-sudo systemctl enable gunicorn-openvpn-monitor.service
-sudo systemctl restart gunicorn-openvpn-monitor.service
+cp gunicorn-openvpn-monitor.service.example /etc/systemd/system/gunicorn-openvpn-monitor.service
+systemctl enable gunicorn-openvpn-monitor.service
+systemctl restart gunicorn-openvpn-monitor.service
 ```
 
 See [configuration](#configuration) for details on configuring openvpn-monitor.
