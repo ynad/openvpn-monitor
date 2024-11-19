@@ -1,0 +1,12 @@
+# ignore python venv dir
+.venv/
+
+# python cache
+__pycache__/
+
+# ignore config file
+*.conf
+
+# ignore personal favicon
+favicon.jpg
+favicon.png
